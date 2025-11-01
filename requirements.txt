@@ -1,3 +1,7 @@
-tensorrt==10.2.0
 pandas
 numpy
+os
+logging
+tensorrt-cu12==10.1.0
+tensorrt-cu12-bindings==10.1.0
+tensorrt-cu12-libs==10.1.0
