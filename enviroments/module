@@ -1,0 +1,86 @@
+#%Module1.0
+#####################################################################
+# Python with Custom CUDA
+# Description: This module loads Python/Conda environment with custom CUDA paths
+# Usage: module load python-customcuda
+#####################################################################
+
+proc ModulesHelp { } {
+    puts stderr "==========================================================="
+    puts stderr "Python with Custom CUDA Environment for TensorRT"
+    puts stderr "Provides:"
+    puts stderr "  - Conda Python environment"
+    puts stderr "  - Custom CUDA toolkit"
+    puts stderr "  - All necessary library paths"
+    puts stderr "==========================================================="
+}
+
+module-whatis "Python with Custom CUDA Installation"
+
+#####################################################################
+# SECTION 1: LOAD BASE PYTHON/CONDA ENVIRONMENT
+# (Keep existing Conda setup - DO NOT MODIFY THIS SECTION)
+#####################################################################
+
+# Load the existing Python module first
+# This sets up all the Conda paths and environment variables
+module load python
+
+#####################################################################
+# SECTION 2: CUSTOM CUDA PATHS
+# (MODIFY THIS SECTION WITH YOUR CUDA PATHS)
+#####################################################################
+
+# ============================================
+# CHANGE THIS PATH TO YOUR CUSTOM CUDA INSTALLATION
+# ============================================
+set cuda_custom_path "/lustre_archive/apps/correlator/cuda-12.1"
+
+# Add CUDA binaries to PATH (nvcc, nvprof, etc.)
+# These will be searched FIRST for CUDA tools
+prepend_path("PATH", "$cuda_custom_path/bin")
+
+# Add CUDA libraries to LD_LIBRARY_PATH
+# These will be loaded FIRST at runtime
+prepend_path("LD_LIBRARY_PATH", "$cuda_custom_path/lib64")
+prepend_path("LD_LIBRARY_PATH", "$cuda_custom_path/lib")
+
+# Add CUDA NVIDIA compiler libraries (if needed for compilation)
+prepend_path("LD_LIBRARY_PATH", "$cuda_custom_path/nvvm/lib64")
+
+#####################################################################
+# SECTION 3: CUDA ENVIRONMENT VARIABLES
+# (MODIFY IF YOUR PATHS ARE DIFFERENT)
+#####################################################################
+
+# Set CUDA home directory (used by many applications)
+setenv("CUDA_HOME", "$cuda_custom_path")
+
+# Alternative names for CUDA home (some apps use different variables)
+setenv("CUDA_ROOT", "$cuda_custom_path")
+setenv("CUDA_PATH", "$cuda_custom_path")
+
+# CUDA installation version (optional - for information)
+setenv("CUDA_VERSION", "12.0")
+
+#####################################################################
+# SECTION 4: OPTIONAL - COMPILATION SETTINGS
+# (MODIFY BASED ON YOUR GPU ARCHITECTURE)
+#####################################################################
+
+# Set CUDA architecture for GPU compilation
+# Change "sm_80" to match your GPU capability
+# Common values: sm_60 (Pascal), sm_70 (Volta), sm_80 (Ampere), sm_90 (Ada Lovelace)
+setenv("CUDA_ARCH", "arch=compute_80,code=sm_80")
+
+# Set default compute capability (optional)
+setenv("CUDA_COMPUTE_CAPABILITY", "80")
+
+#####################################################################
+# SECTION 5: VALIDATION MESSAGE
+#####################################################################
+
+puts stderr "=== Python with Custom CUDA Loaded ==="
+puts stderr "Python: $env(CONDA_PREFIX)/bin/python"
+puts stderr "CUDA: $cuda_custom_path"
+puts stderr "======================================="
