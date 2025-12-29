@@ -173,14 +173,14 @@ def download_model(model_idx, onnx_models_dir):
 if __name__ == "__main__":
     # Test with string path
     try:
-        result = download_model("a", ".")
+        result = download_model("a", "./models")
         print(f"Download successful: {result}")
     except Exception as e:
         print(f"Error: {e}")
     
     # Test with Path object
     try:
-        result = download_model("b", Path("."))
+        result = download_model("b", Path("./models"))
         print(f"Download successful: {result}")
     except Exception as e:
         print(f"Error: {e}")
