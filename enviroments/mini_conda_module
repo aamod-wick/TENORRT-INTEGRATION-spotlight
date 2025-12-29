@@ -1,0 +1,8 @@
+whatis("'Miniconda Environment' ")
+setenv("CONDA_SHLVL","1")
+setenv("CONDA_PREFIX","/lustre_archive/apps/miniconda3")
+prepend_path("PATH","/lustre_archive/apps/miniconda3/bin")
+setenv("CONDA_DEFAULT_ENV","base")
+setenv("VIRTUAL_ENV","/lustre_archive/apps/miniconda3")
+help([[Conda environment
+]])
