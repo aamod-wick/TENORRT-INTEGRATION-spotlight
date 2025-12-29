@@ -1,16 +1,11 @@
 import argparse
-import glob
 import hashlib
 import logging
 import os
-import string
 from pathlib import Path
 
-import h5py
 import numpy as np
-import pandas as pd
 import requests
-import scipy.signal as s
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -19,15 +14,14 @@ logger = logging.getLogger(__name__)
 def get_default_onnx_dir():
     """
     Get the default ONNX models directory.
-    Uses ONNX_HOME environment variable if set, otherwise defaults to $HOME/onnx_models.
+    Uses ONNX_HOME environment variable if set, otherwise defaults to ./models.
     """
     onnx_home = os.environ.get("ONNX_HOME")
     if onnx_home:
         return Path(onnx_home)
     else:
-        home_dir = os.environ.get("HOME", os.getcwd())
-        default_dir = Path(home_dir) / "onnx_models"
-        logger.warning(f"ONNX_HOME not set, using default directory: {default_dir}")
+        default_dir = Path("./models")
+        logger.info(f"Using default ONNX directory: {default_dir}")
         return default_dir
 
 
@@ -100,25 +94,30 @@ def calculate_md5(file_path):
     return hash_md5.hexdigest()
 
 
-def download_model(model_idx, onnx_models_dir):
+def download_model(model_idx, onnx_models_dir=None):
     """
     Download ONNX model from Zenodo if not already cached.
-
+    
     :param model_idx: Model index (a-k)
-    :param onnx_models_dir: Directory to store ONNX models (string or Path)
+    :param onnx_models_dir: Directory to store ONNX models (string or Path). 
+                            If None, uses default directory.
     :return: Path to downloaded model file
     """
     if model_idx not in MODEL_REGISTRY:
         raise ValueError(f"Model {model_idx} not found in registry")
-
+    
+    # Use default directory if not specified
+    if onnx_models_dir is None:
+        onnx_models_dir = get_default_onnx_dir()
+    
     # Ensure onnx_models_dir is a Path object
     onnx_models_dir = Path(onnx_models_dir)
     model_info = MODEL_REGISTRY[model_idx]
     model_path = onnx_models_dir / f"model_{model_idx}.onnx"
-
+    
     # Create directory if it doesn't exist
     onnx_models_dir.mkdir(parents=True, exist_ok=True)
-
+    
     # Check if model already exists and has correct hash
     if model_path.exists():
         logger.info(f"Model {model_idx} found locally, verifying hash...")
@@ -128,19 +127,19 @@ def download_model(model_idx, onnx_models_dir):
         else:
             logger.warning(f"Model {model_idx} hash mismatch, re-downloading...")
             model_path.unlink()
-
+    
     # Download model
     logger.info(
         f"Downloading model {model_idx} ({model_info['size_mb']:.1f} MB) from Zenodo..."
     )
-
+    
     try:
         response = requests.get(model_info["url"], stream=True)
         response.raise_for_status()
-
+        
         total_size = int(response.headers.get("content-length", 0))
         downloaded = 0
-
+        
         with open(model_path, "wb") as f:
             for chunk in response.iter_content(chunk_size=8192):
                 if chunk:
@@ -151,18 +150,18 @@ def download_model(model_idx, onnx_models_dir):
                         print(
                             f"\rDownload progress: {progress:.1f}%", end="", flush=True
                         )
-
+        
         print()  # New line after progress
-
+        
         # Verify downloaded file hash
         logger.info(f"Verifying hash for model {model_idx}...")
         if calculate_md5(model_path) != model_info["md5"]:
             model_path.unlink()
             raise ValueError(f"Downloaded model {model_idx} hash verification failed")
-
+        
         logger.info(f"Model {model_idx} downloaded and verified successfully")
         return model_path
-
+        
     except Exception as e:
         if model_path.exists():
             model_path.unlink()
@@ -171,16 +170,23 @@ def download_model(model_idx, onnx_models_dir):
 
 # Test the function
 if __name__ == "__main__":
-    # Test with string path
+    # Test with default directory (./models)
     try:
-        result = download_model("a", "./models")
+        result = download_model("a")
+        print(f"Download successful: {result}")
+    except Exception as e:
+        print(f"Error: {e}")
+    
+    # Test with explicit directory
+    try:
+        result = download_model("b", "./models")
         print(f"Download successful: {result}")
     except Exception as e:
         print(f"Error: {e}")
     
     # Test with Path object
     try:
-        result = download_model("b", Path("./models"))
+        result = download_model("c", Path("./models"))
         print(f"Download successful: {result}")
     except Exception as e:
         print(f"Error: {e}")
